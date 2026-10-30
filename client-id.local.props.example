@@ -1,0 +1,16 @@
+<!--
+  LOCAL OAuth 2.0 client ID override.
+
+  1. Copy this file to client-id.local.props (same folder):
+       cp client-id.local.props.example client-id.local.props
+  2. Replace the value below with your client ID from
+       https://trello.com/apps/admin → your app → OAuth 2.0 tab
+  3. Build normally - TrelloExtension.csproj auto-imports this file and
+     compiles the ID in. client-id.local.props is gitignored.
+-->
+
+<Project>
+  <PropertyGroup>
+    <TrelloClientId>YOUR_TRELLO_OAUTH2_CLIENT_ID_HERE</TrelloClientId>
+  </PropertyGroup>
+</Project>

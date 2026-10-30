@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "TrelloExtension (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "TrelloExtension (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

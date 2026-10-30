@@ -1,0 +1,141 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>TrelloExtension</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <WindowsSdkPackageVersion>10.0.26100.68-preview</WindowsSdkPackageVersion>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+
+    <PublishProfile>win-$(Platform).pubxml</PublishProfile>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+
+    <AppxPackageIdentityName>BambinoSK.TrelloforCommandPalette</AppxPackageIdentityName>
+    <AppxPackagePublisher>CN=C6123CCC-8B17-4AD9-9449-2938E0A3C928</AppxPackagePublisher>
+    <AppxPackageVersion>1.0.0.0</AppxPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TrelloExtension.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <Import Project="..\client-id.local.props" Condition="Exists('..\client-id.local.props') and '$(TrelloClientId)' == ''" />
+
+  <PropertyGroup>
+    <TrelloClientId Condition="'$(TrelloClientId)' == ''">YOUR_TRELLO_OAUTH2_CLIENT_ID_HERE</TrelloClientId>
+  </PropertyGroup>
+
+  <Target Name="GenerateClientIdSource" BeforeTargets="BeforeCompile">
+    <PropertyGroup>
+      <GeneratedClientIdPath>$(IntermediateOutputPath)GeneratedClientId.g.cs</GeneratedClientIdPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <Compile Include="$(GeneratedClientIdPath)" />
+    </ItemGroup>
+    <ItemGroup>
+      <GeneratedClientIdLine Include="// &lt;auto-generated from the TrelloClientId MSBuild property -- do not edit.&gt;" />
+      <GeneratedClientIdLine Include="namespace TrelloExtension.Auth" />
+      <GeneratedClientIdLine Include="{" />
+      <GeneratedClientIdLine Include="    internal static class TrelloClientIdConfig" />
+      <GeneratedClientIdLine Include="    {" />
+      <GeneratedClientIdLine Include="        internal const string Value = &quot;$(TrelloClientId)&quot;%3B" />
+      <GeneratedClientIdLine Include="    }" />
+      <GeneratedClientIdLine Include="}" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(GeneratedClientIdPath)" Lines="@(GeneratedClientIdLine)" Overwrite="true" />
+  </Target>
+
+  <!-- Copy Assets to the build output folder so Add-AppxPackage -Register can resolve icons. -->
+  <Target Name="CopyAssetsToOutput" AfterTargets="Build">
+    <ItemGroup>
+      <_AssetFiles Include="$(MSBuildProjectDirectory)\Assets\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_AssetFiles)" DestinationFolder="$(OutputPath)Assets\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CommandPalette.Extensions" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" />
+    <PackageReference Include="Shmuelie.WinRTServer" />
+
+    <!-- Needed to enable building an MSIX package -->
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!--
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- PublishSingleFile requires a RuntimeIdentifier; without -r (plain
+         dotnet build / VS AnyCPU) it fails with NETSDK1097. Only request a
+         single file when an RID is actually present. -->
+    <PublishSingleFile Condition="'$(RuntimeIdentifier)' != ''">true</PublishSingleFile>
+    <IsAotCompatible>true</IsAotCompatible>
+
+    <CsWinRTAotOptimizerEnabled>true</CsWinRTAotOptimizerEnabled>
+    <CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
+    <!-- Suppress DynamicallyAccessedMemberTypes.PublicParameterlessConstructor in fallback code path of Windows SDK projection -->
+    <WarningsNotAsErrors>IL2081;$(WarningsNotAsErrors)</WarningsNotAsErrors>
+
+    <!-- When publishing trimmed, make sure to treat trimming warnings as build errors -->
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <!-- In Debug builds, trimming is disabled by default, but all the trim & 
+         AOT warnings are enabled. This gives debug builds a tighter inner loop,
+         while at least warning about future trim violations -->
+    <PublishTrimmed>false</PublishTrimmed>
+    
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
+    <!-- In Release builds, trimming is enabled by default. 
+         feel free to disable this if needed -->
+    <PublishTrimmed>true</PublishTrimmed>
+
+    <!-- In release, also ignore the aforementioned ILLink warning -->
+    <ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
+  </PropertyGroup>
+
+
+</Project>

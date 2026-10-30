@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Must match the main project's TFM so the ProjectReference can load
+         its WinRT/CmdPal types. -->
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <!-- Same Windows SDK projections pin as TrelloExtension.csproj - the
+         test host must reference projections >= the ones the main assembly
+         was compiled against (else NETSDK1148). -->
+    <WindowsSdkPackageVersion>10.0.26100.68-preview</WindowsSdkPackageVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- CA1707: xunit test method names conventionally use underscores. -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+    <!-- The main project requires a platform for its MSIX packaging steps;
+         pass x64 down to the ProjectReference build. -->
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+  </PropertyGroup>
+
+  <!-- Versions are managed centrally in Directory.Packages.props (CPM). -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TrelloExtension\TrelloExtension.csproj" AdditionalProperties="Platform=x64" />
+  </ItemGroup>
+
+</Project>

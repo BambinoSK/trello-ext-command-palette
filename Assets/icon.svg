@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Trello icon -- Command Palette extension</title>
+  <!-- Background: Trello blue (#0052CC) rounded square -->
+  <rect x="0" y="0" width="512" height="512" rx="92" fill="#0052CC"/>
+  <!-- Left column: full inner height -->
+  <rect x="92" y="92" width="138" height="328" rx="25" fill="#FFFFFF"/>
+  <!-- Right column: 45% of the square (Trello logo: right card is shorter) -->
+  <rect x="281" y="92" width="138" height="230" rx="25" fill="#FFFFFF"/>
+</svg>
